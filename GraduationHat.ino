@@ -12,6 +12,7 @@ Adafruit_NeoMatrix matrix = Adafruit_NeoMatrix(12, 11, PIN,
                                                NEO_GRB + NEO_KHZ800);
 
 uint16_t rgb888to565(uint32_t color) {
+  // ChatGPT wrote this function
   uint8_t r = (color >> 16) & 0xFF;
   uint8_t g = (color >> 8) & 0xFF;
   uint8_t b = color & 0xFF;
@@ -23,19 +24,11 @@ uint16_t rgb888to565(uint32_t color) {
   return (r5 << 11) | (g6 << 5) | b5;
 }
 
-
-
-void fillScreen(uint32_t color) {
-  for (int i = 0; i < matrix.numPixels(); i++) {
-    matrix.setPixelColor(i, color);
-  }
-}
-
 int8_t mode = 0;
 
 long lastUpdate = 0;
 
-const uint8_t waitVal = 100;
+const uint8_t waitVal = 200;
 
 void LMode() {
   if (millis() - lastUpdate < waitVal) return;
@@ -73,9 +66,9 @@ void loop() {
         int pixelHue = firstPixelHue + (65536L / matrix.numPixels());
         for (int i = 0; i < matrix.width() * 2; i++) {
           for (int j = 0; j < matrix.width(); j++) {
-            int x = matrix.width() - j;
-            int y = matrix.height() - (i - j);
-            int index;
+            uint8_t x = matrix.width() - j;
+            uint8_t y = matrix.height() - (i - j);
+            uint8_t index;
             if (y % 2 == 0)
               index = x + y * matrix.width() - 1;
             else
@@ -95,13 +88,12 @@ void loop() {
         if (mode != 1) break;
         Serial.println(mode);
         uint32_t pixelHue = firstPixelHue + (65536L / matrix.numPixels());
-        for (int i = 0; i < 11; i++) {
+        for (uint8_t i = 0; i < 11; i++) {
           matrix.drawCircle(5, 5, i, rgb888to565(matrix.gamma32(matrix.ColorHSV(pixelHue - i * 4096))));
         }
         matrix.show();
         delay(50);
       }
-
       matrix.show();
       break;
 
@@ -113,70 +105,107 @@ void loop() {
         if (mode != 2) break;
         Serial.println(mode);
         uint32_t pixelHue = firstPixelHue + (65536L / matrix.numPixels());
-        for (int i = 0; i < matrix.width(); i++) {
+        for (uint8_t i = 0; i < matrix.width(); i++) {
           matrix.drawRect(5 - i / 2, 5 - i / 2, i, i, rgb888to565(matrix.gamma32(matrix.ColorHSV(pixelHue - i * 4096))));
         }
         matrix.show();
         delay(50);
       }
-
       matrix.show();
       break;
 
     case (3):
       // Stars
-      const uint16_t duration = 5000;
-      const long startTime = millis();
+      {  // This extra layer of brackets is required... for some reason
+        const uint16_t duration = 5000;
+        const unsigned long startTime = millis();
+        const uint8_t numStars = 5;
+        const uint8_t minDist = 4;
 
-      matrix.setBrightness(32);
+        matrix.setBrightness(32);
+        matrix.fillScreen(0);
+        matrix.show();
 
-      matrix.fillScreen(0);
-      matrix.show();
+        struct xypair {
+          uint8_t x;
+          uint8_t y;
+        };
 
-      struct xypair {
-        uint8_t x;
-        uint8_t y;
-      };
+        xypair stars[numStars];
 
-      const uint8_t numStars = 5;
-
-      xypair stars[numStars];
-
-      const uint8_t minDist = 4;
-
-      for (int i = 0; i < numStars; i++) {
-        stars[i].x = random(1, matrix.width() - 2);
-        stars[i].y = random(1, matrix.height() - 2);
-        for (int j = 0; j < numStars; j++) {
-          if (j == i) continue;
-          if ((abs(stars[i].x - stars[j].x) < minDist && abs(stars[i].y - stars[j].y) < minDist) && millis() - startTime < duration / 32) {
-            i--;
-            break;
+        for (uint8_t i = 0; i < numStars; i++) {
+          stars[i].x = random(1, matrix.width() - 2);
+          stars[i].y = random(1, matrix.height() - 2);
+          for (uint8_t j = 0; j < numStars; j++) {
+            if (j == i) continue;
+            if ((abs(stars[i].x - stars[j].x) < minDist && abs(stars[i].y - stars[j].y) < minDist) && millis() - startTime < duration / 32) {
+              i--;
+              break;
+            }
           }
         }
-      }
 
-      while (millis() - startTime < duration) {
-        if (mode != 3) break;
-        long amount = (duration / 2) - (millis() - startTime);
-        uint8_t intensity = map(abs(amount), duration / 2, 0, 0, 255);
-        uint16_t color = matrix.Color(intensity, intensity, 0);
-        for (int i = 0; i < numStars; i++) {
-          matrix.drawPixel(stars[i].x, stars[i].y, color);
-          matrix.drawCircle(stars[i].x, stars[i].y, 1, color);
+        while (millis() - startTime < duration) {
+          if (mode != 3) break;
+          long amount = (duration / 2) - (millis() - startTime);
+          uint8_t intensity = map(abs(amount), duration / 2, 0, 0, 255);
+          uint16_t color = matrix.Color(intensity, intensity, 0);
+          for (uint8_t i = 0; i < numStars; i++) {
+            matrix.drawPixel(stars[i].x, stars[i].y, color);
+            matrix.drawCircle(stars[i].x, stars[i].y, 1, color);
+          }
+          matrix.show();
         }
-        matrix.show();
       }
-
       break;
 
     case (4):
-      matrix.fillScreen(matrix.Color(0, 0, 255));
+      // Spinning Bar
+      for (float i = 0; i < PI * 2; i += PI / 6) {
+        if (mode != 4) break;
+        uint8_t x1 = 5 + 5 * sin(i);
+        uint8_t y1 = 5 + 5 * cos(i);
+        uint8_t x2 = 5 + 5 * sin(i + PI);
+        uint8_t y2 = 5 + 5 * cos(i + PI);
+        matrix.clear();
+        matrix.drawLine(x1, y1, x2, y2, matrix.Color(255, 255, 255));
+        matrix.show();
+        delay(300);
+      }
+      break;
+
+    case (5):
+      // Spinning Triangle
+      for (float i = 0; i < PI * 2; i += PI / 6) {
+        if (mode != 5) break;
+        uint8_t x1 = 5 + 5 * sin(i);
+        uint8_t y1 = 5 + 5 * cos(i);
+        uint8_t x2 = 5 + 5 * sin(i + PI * 2 / 3);
+        uint8_t y2 = 5 + 5 * cos(i + PI * 2 / 3);
+        uint8_t x3 = 5 + 5 * sin(i + PI * 4 / 3);
+        uint8_t y3 = 5 + 5 * cos(i + PI * 4 / 3);
+        matrix.clear();
+        matrix.drawTriangle(x1, y1, x2, y2, x3, y3, matrix.Color(255, 255, 255));
+        matrix.fillTriangle(x1, y1, x2, y2, x3, y3, matrix.Color(255, 255, 255));
+        matrix.show();
+        delay(300);
+      }
+      break;
+
+    case (6):
+      matrix.setBrightness(16);
+      matrix.fillScreen(matrix.Color(255, 255, 255));
+      matrix.show();
+      break;
+
+    case (7):
+      matrix.clear();
       matrix.show();
       break;
 
     default:
-      matrix.fillScreen(0);
+      matrix.clear();
       matrix.show();
+      break;
   }
 }
