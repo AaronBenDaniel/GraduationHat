@@ -46,6 +46,8 @@ void RMode() {
 
 void setup() {
   matrix.begin();
+  matrix.clear();
+  matrix.show();
   pinMode(LEFT, INPUT_PULLUP);
   pinMode(RIGHT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(LEFT), LMode, FALLING);
@@ -148,8 +150,9 @@ void loop() {
         while (millis() - startTime < duration) {
           if (mode != 3) break;
           long amount = (duration / 2) - (millis() - startTime);
-          uint8_t intensity = map(abs(amount), duration / 2, 0, 0, 255);
-          uint16_t color = matrix.Color(intensity, intensity, 0);
+          int16_t intensity = map(abs(amount), duration / 2, 0, 0, 700);
+          if (intensity > 255) intensity = 255;
+          uint16_t color = matrix.Color(intensity, intensity * 0.9, 0);
           for (uint8_t i = 0; i < numStars; i++) {
             matrix.drawPixel(stars[i].x, stars[i].y, color);
             matrix.drawCircle(stars[i].x, stars[i].y, 1, color);
