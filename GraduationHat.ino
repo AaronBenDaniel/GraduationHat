@@ -1,6 +1,7 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_NeoMatrix.h>
 #include <Adafruit_NeoPixel.h>
+#include <Fonts/FreeMonoBold9pt7b.h>
 
 #define PIN 6
 
@@ -48,6 +49,9 @@ void setup() {
   matrix.begin();
   matrix.clear();
   matrix.show();
+  matrix.setTextWrap(false);
+  matrix.setFont(&FreeMonoBold9pt7b);
+  matrix.setTextColor(matrix.Color(255, 100, 0));
   pinMode(LEFT, INPUT_PULLUP);
   pinMode(RIGHT, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(LEFT), LMode, FALLING);
@@ -202,8 +206,17 @@ void loop() {
       break;
 
     case (7):
+      static int x = matrix.width();
       matrix.clear();
+      matrix.setCursor(x, matrix.height() - 1);
+      matrix.print("MHS Class of 2025");
       matrix.show();
+      x--;
+      if (x < -200) {
+        x = matrix.width();
+      }
+      delay(100);
+
       break;
 
     default:
